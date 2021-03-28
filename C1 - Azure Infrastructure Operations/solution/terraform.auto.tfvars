@@ -1,5 +1,5 @@
 tagging_policy_config = {
-  name         = "tagPolicy"
+  name         = "tagging-policy"
   policy_type  = "Custom"
   mode         = "Indexed"
   display_name = "Policy ensures all indexed resources the subscription have tags and deny deployment if they do not."

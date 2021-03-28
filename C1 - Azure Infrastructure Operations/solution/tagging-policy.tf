@@ -27,7 +27,6 @@ METADATA
   }
 POLICY_RULE
 
-
   parameters = <<PARAMETERS
     {
    "tagName": {
