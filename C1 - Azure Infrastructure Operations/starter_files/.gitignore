@@ -1,8 +1,7 @@
 .DS_Store
 .DS_Store?
-# Local .terraform directories
+
 **/.terraform/*
-**/.idea/*
 
 # .tfstate files
 *.tfstate
@@ -30,4 +29,3 @@ override.tf.json
 
 # Include tfplan files to ignore the plan output of command: terraform plan -out=tfplan
 # example: *tfplan*
-/C1 - Azure Infrastructure Operations/solution/.terraform.lock.hcl

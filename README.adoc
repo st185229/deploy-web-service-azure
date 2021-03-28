@@ -1,0 +1,18 @@
+= Deploy a web service in Azure with Terraform and Packer
+
+== 1. Deploy an azure policy
+The details are available in the solution folder under C1-Azure Infrastructure Operations
+=== 1.1 Goal
+Create a policy that ensures all indexed resources in your subscription have tags and deny deployment if they do not.
+
+=== 1.2 Solution
+This has been implemented through terraform. The tagging-policy.tf
+
+=== Testing
+
+This can be tested by executing in bash
+
+[source]
+----
+# az policy assignment list
+----
