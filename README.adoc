@@ -6,13 +6,19 @@ The details are available in the solution folder under C1-Azure Infrastructure O
 Create a policy that ensures all indexed resources in your subscription have tags and deny deployment if they do not.
 
 === 1.2 Solution
-This has been implemented through terraform. The tagging-policy.tf
+This has been implemented through terraform. The tagging-policy.tf define the policy and tagging-policy-assignment.tf applies this to the subscription level
 
-=== Testing
+.Compliance to requirements 
 
-This can be tested by executing in bash
+* [x] Write a policy definition to deny the creation of resources that do to have tags (terraform file tagging-policy.tf)
+
+* [x] Apply the policy definition to the subscription with same name tagging policy .  ```policy_definition_id = azurerm_policy_definition.tagging-policy.id``` relates the above policy with this.
+
+* [x] Testing
+This is  tested by executing in bash
 
 [source]
 ----
 # az policy assignment list
 ----
+image::images/c.png[a diagram shows policy assignment]
