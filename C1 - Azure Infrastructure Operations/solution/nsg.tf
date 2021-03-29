@@ -8,6 +8,8 @@ resource "azurerm_network_security_group" "allow_access" {
   }
 }
 
+#THe above NSG is assigned to interface cards in resource "azurerm_network_interface_security_group_association" "web-sga" , Refer linux_vm
+
 resource "azurerm_network_security_rule" "allow_access_from_intenet_80" {
   name                        = "HTTP_80"
   priority                    = 1001

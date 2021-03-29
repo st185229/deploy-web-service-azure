@@ -26,10 +26,12 @@ variable "network_address_spaces" {
   type        = map(list(string))
 }
 
+
 variable "web_svc_port" {
   default = 80
 }
 
+# Packer image resource group
 variable "packerimage_rg" {
   default = "packer-rg"
 }

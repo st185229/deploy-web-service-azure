@@ -1,7 +1,7 @@
 
 prefix         = "udacity"
 location       = "EastUS"
-packerimage_rg = "packer-rg"
+packerimage_rg = "packer-rg" # The resource group where packer images 
 
 tagging_policy_config = {
   name         = "tagging-policy"
@@ -24,16 +24,12 @@ network_address_spaces = {
 }
 
 linux_vms_spec = {
+  # Number of VMs in the backend pool
   vm_count       = 2
   vm_name_prefix = "udcweb"
   vm_size        = "Standard_F2"
-  vm_username    = "authentic"
-  # ---------------OS related start
-  #vm_publisher = "Canonical"
-  #vm_offer     = "UbuntuServer"
-  #vm_sku       = "18.04-LTS"
-  #vm_version   = "latest"
-
+  vm_username    = "azureuser"
+  # The below will go as label
   vm_created_by = "suresh thomas"
   vm_team_name  = "udacity"
   vm_env_type   = "production"

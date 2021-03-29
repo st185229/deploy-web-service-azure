@@ -5,13 +5,12 @@ resource "tls_private_key" "bastian_ssh" {
   algorithm = "RSA"
   rsa_bits  = 4096
 }
+# A number of network interfaces are created as per vm_count
 resource "azurerm_network_interface" "linux_ni" {
   count               = var.linux_vms_spec["vm_count"]
   name                = "nic_${var.linux_vms_spec["vm_name_prefix"]}_${count.index}"
   location            = azurerm_resource_group.rg_web.location
   resource_group_name = azurerm_resource_group.rg_web.name
-  # Assign the created security group
-  #network_security_group_id = azurerm_network_security_group.allow_access.id
 
   ip_configuration {
     name                          = "internal"
@@ -20,8 +19,9 @@ resource "azurerm_network_interface" "linux_ni" {
   }
 }
 resource "azurerm_network_interface_security_group_association" "web-sga" {
-  count                     = var.linux_vms_spec["vm_count"]
-  network_interface_id      = element(azurerm_network_interface.linux_ni, count.index).id
+  count                = var.linux_vms_spec["vm_count"]
+  network_interface_id = element(azurerm_network_interface.linux_ni, count.index).id
+  # NSG is assigned here 
   network_security_group_id = azurerm_network_security_group.allow_access.id
 }
 
