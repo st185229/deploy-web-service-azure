@@ -1,6 +1,84 @@
 = Deploy a web service in Azure with Terraform and Packer
 
-== The overall solution
+== How to use this project
+
+=== Step 1 create VM image (for backend pools ) using packer
+
+. Create a resource group for holding packager image. This can be created manually /terraform. I have created it in a resource group called packer-rg
+. Udpate the server.json inside solution folder to update the resource group (line 19)
+
+. Export the following env variables with service principle details (the same will be used for terraform as well)
+
+[source]
+----
+ARM_CLIENT_ID
+ARM_CLIENT_SECRET
+ARM_SUBSCRIPTION_ID
+----
+. Buiild the packer image , assuming that packer is installed. In case you dont have env vars setup, you can also use below command
+
+[source]
+----
+packer build -var 'subscription_id=xxxx' -var 'tenant_id=xxx' -var 'client_id=xxx' -var 'client_secret=xxx' server.json
+----
+
+. Make sure that you have image created in the resource group
+
+=== Build Environment using packer
+In the solution folder , go to terraform.auto.tfvars.
+
+. Set the number of nodes in the backend pool as vm_count in linux_vms_spec
+. Set the packerimage resource group in packerimage_rg =
+. The rest of the infra will be created in an ${prefix}-rg. The prefix = "udacity" here
+. Once you update , just run terraform plan -out solution.plan
+. Make sure  that its run from solution folder
+. Then you can terraform apply (optionally give solution.plan as plan name)
+
+[source]
+----
+
+prefix         = "udacity"
+location       = "EastUS"
+packerimage_rg = "packer-rg" # The resource group where packer images
+
+tagging_policy_config = {
+  name         = "tagging-policy"
+  policy_type  = "Custom"
+  mode         = "Indexed"
+  display_name = "Policy ensures all indexed resources the subscription have tags and deny deployment if they do not."
+  category : "General"
+}
+
+tagging_policy_config_assn = {
+  name         = "tagging-policy-assignment"
+  display_name = "enforce tags"
+  description  = "Assign policy ensures all indexed resources the subscription have tags and deny deployment if they do not"
+  tag_name     = "tag enforcement"
+}
+
+network_address_spaces = {
+  vnet_address_spaces   = ["10.0.2.0/24"]
+  subnet_address_spaces = ["10.0.2.0/24"]
+}
+
+linux_vms_spec = {
+  # Number of VMs in the backend pool
+  vm_count       = 2
+  vm_name_prefix = "udcweb"
+  vm_size        = "Standard_F2"
+  vm_username    = "azureuser"
+  # The below will go as label
+  vm_created_by = "suresh thomas"
+  vm_team_name  = "udacity"
+  vm_env_type   = "production"
+}
+
+
+----
+
+
+== The overall solution - Technical details
+The below gives the architecture of the application
 
 image::images/d.png[Overall design]
 
@@ -83,37 +161,42 @@ Before we get started, we'll need to verify that the policy we deployed in an ea
 
 * [x] Create a virtual network and subnet. See the networks.tf file
 
-The below two creates the required vnet and subnets. The CIDR ranges are configurable through the variables 
+The below two creates the required vnet and subnets. The CIDR ranges are configurable through the variables
 
-```
-resource "azurerm_virtual_network" "net_web" 
-resource "azurerm_subnet" "internal" 
-```
+[source]
+----
+resource "azurerm_virtual_network" "net_web"
+resource "azurerm_subnet" "internal"
+----
 
 * [x] Create network security group - The nsg.tf file creates the NSG (Network Security Group)
 
-```
+[source]
+----
 # This  is the NSG
-resource "azurerm_network_security_group" "allow_access" 
+resource "azurerm_network_security_group" "allow_access"
 # Rule 1 allow 80 port access
-resource "azurerm_network_security_rule" "allow_access_from_intenet_80" 
+resource "azurerm_network_security_rule" "allow_access_from_intenet_80"
 # Rule 2 allow all access within VNET
 resource "azurerm_network_security_rule" "allow_access_from_vm_on_subnet"
 
-```
+----
 * [x] Create a public IP - This (networks.tf). This will be assigned to a NIC (below)
-```
+
+[source]
+----
 resource "azurerm_public_ip" "web-svc-lb-ip" {
 #...
 #...
 }
 
-```
+----
 
 * [x] Create network interface and assign the IP created above 
 The file networks.tf gives details , note the ip_configuration block for details on the how the IP is assigned to the NIC
 
-```
+[source]
+----
 resource "azurerm_network_interface" "main" {
  #...
  #...
@@ -125,9 +208,11 @@ resource "azurerm_network_interface" "main" {
   }
   #...
 }web_svc_port
-```
-* [x] Create LB  - The implementation is available  in web-lb.tf. The frontend_ip_configuration assigns the public Ip to  LB 
-```
+----
+* [x] Create LB  - The implementation is available  in web-lb.tf. The frontend_ip_configuration assigns the public Ip to  LB
+
+[source]
+----
 resource "azurerm_lb" "web-svc-lb" {
 #...
 #...
@@ -135,30 +220,35 @@ frontend_ip_configuration {
     name                 = "PublicIPAddress"
     public_ip_address_id = azurerm_public_ip.web-svc-lb-ip.id
   }
-#....  
+#....
 
 }
-```
+----
 * [x] Backend pool (ref web-lb.tf) assigned to the LB in the previous step
-```
+
+[source]
+----
 resource "azurerm_lb_backend_address_pool" "web-svc-lb-backend" {
   loadbalancer_id = azurerm_lb.web-svc-lb.id
   name            = "BackEndAddressPool"
 }
-```
+----
 * [x] A health probe is created and assigned to LB (Best practice - web-lb.tf). The port is set in the variable default 80
-```
+
+[source]
+----
 resource "azurerm_lb_probe" "web_svc_health_probe" {
   resource_group_name = azurerm_resource_group.rg_web.name
   loadbalancer_id     = azurerm_lb.web-svc-lb.id
   name                = "web-http-probe"
   port                = var.web_svc_port
 }
-```
+----
  
 == Terraform plan
 
-```
+[source]
+----
 An execution plan has been generated and is shown below.
 Resource actions are indicated with the following symbols:
   + create
@@ -641,4 +731,13 @@ Terraform will perform the following actions:
 
 Plan: 26 to add, 0 to change, 0 to destroy.
 
-```
+----
+== Appendix
+
+=== Packer group
+
+image::images/p.png[Packer resource group]
+
+=== Application group
+
+image::images/e.png[App resource group]
