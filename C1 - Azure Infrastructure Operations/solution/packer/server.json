@@ -17,7 +17,7 @@
 		"image_sku": "18.04-LTS",
 	
 		"managed_image_resource_group_name": "packer-rg",
-		"managed_image_name": "myPackerImage",
+		"managed_image_name": "ubuntuBusyBox",
 	
 		"location": "East US",
 		"vm_size": "Standard_B1ms"

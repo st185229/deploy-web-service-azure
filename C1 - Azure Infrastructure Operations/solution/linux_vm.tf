@@ -38,9 +38,6 @@ resource "azurerm_managed_disk" "pool_mngd_disk" {
     environment = "Production"
   }
 }
-
-
-
 data "azurerm_image" "packerimage" {
   name                = "ubuntuBusyBox"
   resource_group_name = var.packerimage_rg
