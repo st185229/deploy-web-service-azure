@@ -233,6 +233,8 @@ resource "azurerm_lb_backend_address_pool" "web-svc-lb-backend" {
   name            = "BackEndAddressPool"
 }
 ----
+* [x] Bakend pool association to NICs . Each NIC of all backend pool VMS are assigned to NICs. You can see that in linux_vm.tf
+
 * [x] A health probe is created and assigned to LB (Best practice - web-lb.tf). The port is set in the variable default 80
 
 [source]
@@ -244,8 +246,118 @@ resource "azurerm_lb_probe" "web_svc_health_probe" {
   port                = var.web_svc_port
 }
 ----
+
+[Source]
+----
+
+resource "azurerm_network_interface_backend_address_pool_association" "lb_backendpool_assn" {
+  count                   = var.linux_vms_spec.vm_count
+  network_interface_id    = element(azurerm_network_interface.linux_ni, count.index).id
+  ip_configuration_name   = "internal"
+  backend_address_pool_id = azurerm_lb_backend_address_pool.web-svc-lb-backend-pool.id
+}
+----
+* [x] Create a virtual machine availability set
+The availability-set.tf define the availability set
+
+[source]
+----
+
+# Availability set , this is assigned to the VM in linux_vm.tf - resource "azurerm_linux_virtual_machine" "web_linux"
+resource "azurerm_availability_set" "web-svc-vm-avl-set" {
+  name                = "webbackendavailabilityset"
+  location            = azurerm_resource_group.rg_web.location
+  resource_group_name = azurerm_resource_group.rg_web.name
+
+  tags = {
+    environment = "Production"
+  }
+}
+----
+The availability set is then assigned to VM
+
+[source]
+----
+resource "azurerm_linux_virtual_machine" "web_linux" {
+  # Please see linux_vm.tf line 46
+  ##
+  ##
+  availability_set_id   = azurerm_availability_set.web-svc-vm-avl-set.id
+  ####
+  }
+----
+
+* [x] Create VMs, Have a look at the linux_vm.tf. There are two things to note
+. Data element azurerm_image
+. The VM resource
+
+[source]
+----
+data "azurerm_image" "packerimage" {
+  name                = "ubuntuBusyBox"
+  resource_group_name = var.packerimage_rg
+}
+
+resource "azurerm_linux_virtual_machine" "web_linux" {
+ #
+ source_image_id = data.azurerm_image.packerimage.id
+ #
+----
+
+
+* [x] Create managed disks and assiign to VM, The below block create them
+
+[source]
+----
+resource "azurerm_managed_disk" "pool_mngd_disk" {
+  count                = var.linux_vms_spec["vm_count"]
+  name                 = "dsk_${var.linux_vms_spec["vm_name_prefix"]}_${count.index}"
+  location             = azurerm_resource_group.rg_web.location
+  resource_group_name  = azurerm_resource_group.rg_web.name
+  storage_account_type = "Standard_LRS"
+  create_option        = "Empty"
+  disk_size_gb         = "1"
+
+  tags = {
+    environment = "Production"
+  }
+}
+----
+
+The below block assign them to VM
+
+[source]
+----
+resource "azurerm_virtual_machine_data_disk_attachment" "pool_mngd_disk_attachment" {
+  count              = var.linux_vms_spec["vm_count"]
+  managed_disk_id    = element(azurerm_managed_disk.pool_mngd_disk, count.index).id
+  virtual_machine_id = element(azurerm_linux_virtual_machine.web_linux, count.index).id
+  lun                = "10"
+  caching            = "ReadWrite"
+}
+
+----
+
+* [x] Ensure that variables file allows customers to configure number of VMs. The VM count in the var allows . For example, its default set as 2
+
+[source]
+----
+linux_vms_spec = {
+  # Number of VMs in the backend pool
+  vm_count       = 2
+  vm_name_prefix = "udcweb"
+  vm_size        = "Standard_F2"
+  vm_username    = "azureuser"
+  # The below will go as label
+  vm_created_by = "suresh thomas"
+  vm_team_name  = "udacity"
+  vm_env_type   = "production"
+}
+----
+
+
  
-== Terraform plan
+== Terraform plan, below is the output
 
 [source]
 ----
