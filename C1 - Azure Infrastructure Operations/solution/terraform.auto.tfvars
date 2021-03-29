@@ -17,4 +17,8 @@ tagging_policy_config_assn = {
   tag_name     = "tag enforcement"
 }
 
+network_address_spaces = {
+  vnet_address_spaces   = ["10.0.2.0/24"]
+  subnet_address_spaces = ["10.0.2.0/24"]
+}
 

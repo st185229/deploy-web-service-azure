@@ -2,6 +2,7 @@
 
 == 1. Deploy an azure policy
 The details are available in the solution folder under C1-Azure Infrastructure Operations
+
 === 1.1 Goal
 Create a policy that ensures all indexed resources in your subscription have tags and deny deployment if they do not.
 
@@ -22,3 +23,86 @@ This is  tested by executing in bash
 # az policy assignment list
 ----
 image::images/c.png[a diagram shows policy assignment]
+
+== 2. Packer template
+
+=== 2.1 Goal
+
+The first thing we're going to want to do is use Packer to create a server image, ensuring that the provided application is included in the template. 
+
+=== 2.2 Solution
+
+.Compliance to requirements 
+
+Refer to the packer folder in this project to see the packer details. Note that the resource-group.tf file create a resource group
+
+[source]
+----
+resource "azurerm_resource_group" "rg_web" {
+  name     = "${var.prefix}-rg"
+  location = var.location
+}
+----
+The var.prefix (Refer variables.tf and terraform.auto.tfvars) has been set as 'udacity'. So the resource group name will be udacity-rg
+
+* [x] Use Ubuntu 18.04-LTS as SKU - You can see the server.json in line 17
+* [x] Ensure that busybox provisioners requirements are incorporated
+
+[source]
+----
+	"provisioners": [{
+		"inline": [
+			"echo 'Hello, World!' > index.html",
+			"nohup busybox httpd -f -p 80 &"
+		],
+		"inline_shebang": "/bin/sh -x",
+		"type": "shell"
+	}]
+----
+* [x] Ensure that resource group is sane as specified in terraform- The resource-group.tf can ve verified 
+
+== 3. Terraform Template
+
+=== 3.1 Goal
+
+Terraform template will allow us to reliably create, update, and destroy our infrastructure. In this example, we want to use the skills we've built with variables and loops, along with our knowledge of Azure infrastructure, to deploy a web app that has been loaded into our Packer template already.
+
+Before we get started, we'll need to verify that the policy we deployed in an earlier lesson (that one that requires tags) is still available using the Azure CLI, and include a screenshot of that policy output in our repository.
+
+=== 3.2 Solution
+
+.Compliance to requirements 
+
+* [x] Create resource group.  The resource-group.tf foes this 
+
+* [x] Create a virtual network and subnet. See the networks.tf file
+
+The below two creates the required vnet and subnets. The CIDR ranges are configurable through the variables 
+
+```
+resource "azurerm_virtual_network" "net_web" 
+resource "azurerm_subnet" "internal" 
+```
+
+* [x] Create network security group - The nsg.tf file creates the NSG (Network Security Group)
+
+```
+# This  is the NSG
+resource "azurerm_network_security_group" "allow_access" 
+# Rule 1 allow 80 port access
+resource "azurerm_network_security_rule" "allow_access_from_intenet_80" 
+# Rule 2 allow all access within VNET
+resource "azurerm_network_security_rule" "allow_access_from_vm_on_subnet"
+
+```
+
+
+
+
+
+
+
+
+
+resource "azurerm_public_ip" "vm_pub_ip" 
+resource "azurerm_network_interface" "main" 
