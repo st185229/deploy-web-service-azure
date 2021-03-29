@@ -7,7 +7,7 @@ resource "tls_private_key" "bastian_ssh" {
 }
 resource "azurerm_network_interface" "linux_ni" {
   count               = var.linux_vms_spec["vm_count"]
-  name                =  "nic_${var.linux_vms_spec["vm_name_prefix"]}_${count.index}"
+  name                = "nic_${var.linux_vms_spec["vm_name_prefix"]}_${count.index}"
   location            = azurerm_resource_group.rg_web.location
   resource_group_name = azurerm_resource_group.rg_web.name
   # Assign the created security group
@@ -20,7 +20,7 @@ resource "azurerm_network_interface" "linux_ni" {
   }
 }
 resource "azurerm_network_interface_security_group_association" "web-sga" {
-  count               = var.linux_vms_spec["vm_count"]
+  count                     = var.linux_vms_spec["vm_count"]
   network_interface_id      = element(azurerm_network_interface.linux_ni, count.index).id
   network_security_group_id = azurerm_network_security_group.allow_access.id
 }
@@ -42,28 +42,27 @@ resource "azurerm_managed_disk" "pool_mngd_disk" {
 
 
 data "azurerm_image" "packerimage" {
-  name                = "myPackerImage"
-  resource_group_name = azurerm_resource_group.rg_web.name
+  name                = "ubuntuBusyBox"
+  resource_group_name = var.packerimage_rg
 }
 
 resource "azurerm_linux_virtual_machine" "web_linux" {
   # How many 
-  count                         = var.linux_vms_spec.vm_count
-  name                          = format("vm_%s_%s", var.linux_vms_spec["vm_name_prefix"], count.index)
-  location                      = azurerm_resource_group.rg_web.location
-  resource_group_name           = azurerm_resource_group.rg_web.name
-  network_interface_ids         = [element(azurerm_network_interface.linux_ni, count.index).id, ]
-  size                          = var.linux_vms_spec["vm_size"]
- 
+  count                 = var.linux_vms_spec.vm_count
+  name                  = format("vm%s%s", var.linux_vms_spec["vm_name_prefix"], count.index)
+  location              = azurerm_resource_group.rg_web.location
+  resource_group_name   = azurerm_resource_group.rg_web.name
+  network_interface_ids = [element(azurerm_network_interface.linux_ni, count.index).id, ]
+  size                  = var.linux_vms_spec["vm_size"]
+  availability_set_id   = azurerm_availability_set.web-svc-vm-avl-set.id
 
- source_image_id = data.azurerm_image.packerimage.id
+  source_image_id = data.azurerm_image.packerimage.id
 
- os_disk {
-    name                  = "${var.prefix}-osdisk"
-    storage_account_type  = "Standard_LRS"
-    caching               = "ReadWrite"
+  os_disk {
+    name                 = format("dsk%s%s", var.linux_vms_spec["vm_name_prefix"], count.index)
+    storage_account_type = "Standard_LRS"
+    caching              = "ReadWrite"
   }
-
 
   admin_username = var.linux_vms_spec["vm_username"]
   admin_ssh_key {
@@ -83,4 +82,11 @@ resource "azurerm_virtual_machine_data_disk_attachment" "pool_mngd_disk_attachme
   virtual_machine_id = element(azurerm_linux_virtual_machine.web_linux, count.index).id
   lun                = "10"
   caching            = "ReadWrite"
+}
+
+resource "azurerm_network_interface_backend_address_pool_association" "lb_backendpool_assn" {
+  count                   = var.linux_vms_spec.vm_count
+  network_interface_id    = element(azurerm_network_interface.linux_ni, count.index).id
+  ip_configuration_name   = "internal"
+  backend_address_pool_id = azurerm_lb_backend_address_pool.web-svc-lb-backend-pool.id
 }

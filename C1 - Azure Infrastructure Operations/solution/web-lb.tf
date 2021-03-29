@@ -11,7 +11,7 @@ resource "azurerm_lb" "web-svc-lb" {
   }
 }
 
-resource "azurerm_lb_backend_address_pool" "web-svc-lb-backend" {
+resource "azurerm_lb_backend_address_pool" "web-svc-lb-backend-pool" {
   loadbalancer_id = azurerm_lb.web-svc-lb.id
   name            = "BackEndAddressPool"
 }

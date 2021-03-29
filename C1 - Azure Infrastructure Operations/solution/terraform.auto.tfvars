@@ -1,6 +1,7 @@
 
-prefix   = "udacity"
-location = "EastUS"
+prefix         = "udacity"
+location       = "EastUS"
+packerimage_rg = "packer-rg"
 
 tagging_policy_config = {
   name         = "tagging-policy"
@@ -24,7 +25,7 @@ network_address_spaces = {
 
 linux_vms_spec = {
   vm_count       = 2
-  vm_name_prefix = "udc_web"
+  vm_name_prefix = "udcweb"
   vm_size        = "Standard_F2"
   vm_username    = "authentic"
   # ---------------OS related start

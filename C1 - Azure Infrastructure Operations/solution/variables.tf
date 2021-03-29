@@ -29,3 +29,7 @@ variable "network_address_spaces" {
 variable "web_svc_port" {
   default = 80
 }
+
+variable "packerimage_rg" {
+  default = "packer-rg"
+}
