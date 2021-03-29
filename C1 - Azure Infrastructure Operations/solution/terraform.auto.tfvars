@@ -22,3 +22,19 @@ network_address_spaces = {
   subnet_address_spaces = ["10.0.2.0/24"]
 }
 
+linux_vms_spec = {
+  vm_count       = 2
+  vm_name_prefix = "udc_web"
+  vm_size        = "Standard_F2"
+  vm_username    = "authentic"
+  # ---------------OS related start
+  #vm_publisher = "Canonical"
+  #vm_offer     = "UbuntuServer"
+  #vm_sku       = "18.04-LTS"
+  #vm_version   = "latest"
+
+  vm_created_by = "suresh thomas"
+  vm_team_name  = "udacity"
+  vm_env_type   = "production"
+}
+

@@ -6,6 +6,11 @@ variable "tagging_policy_config_assn" {
   description = "tagging policy assignemnets to subscription"
   type        = map(string)
 }
+
+variable "linux_vms_spec" {
+  type = map(any)
+}
+
 variable "prefix" {
   description = "The prefix which should be used for all resources"
   default     = "udacity"
@@ -19,4 +24,8 @@ variable "location" {
 variable "network_address_spaces" {
   description = "Address spaces for virtual networks and subnets"
   type        = map(list(string))
+}
+
+variable "web_svc_port" {
+  default = 80
 }

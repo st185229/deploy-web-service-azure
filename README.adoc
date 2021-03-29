@@ -1,7 +1,13 @@
 = Deploy a web service in Azure with Terraform and Packer
 
+== The overall solution
+
+image::images/d.png[Overall design]
+
+
 == 1. Deploy an azure policy
 The details are available in the solution folder under C1-Azure Infrastructure Operations
+
 
 === 1.1 Goal
 Create a policy that ensures all indexed resources in your subscription have tags and deny deployment if they do not.
@@ -95,14 +101,59 @@ resource "azurerm_network_security_rule" "allow_access_from_intenet_80"
 resource "azurerm_network_security_rule" "allow_access_from_vm_on_subnet"
 
 ```
+* [x] Create a public IP - This (networks.tf). This will be assigned to a NIC (below)
+```
+resource "azurerm_public_ip" "web-svc-lb-ip" {
+#...
+#...
+}
 
+```
 
+* [x] Create network interface and assign the IP created above 
+The file networks.tf gives details , note the ip_configuration block for details on the how the IP is assigned to the NIC
 
+```
+resource "azurerm_network_interface" "main" {
+ #...
+ #...
+ ip_configuration {
+    name                          = "internal"
+    subnet_id                     = azurerm_subnet.internal.id
+    private_ip_address_allocation = "Dynamic"
+    public_ip_address_id          = azurerm_public_ip.web-svc-lb-ip.id
+  }
+  #...
+}web_svc_port
+```
+* [x] Create LB  - The implementation is available  in web-lb.tf. The frontend_ip_configuration assigns the public Ip to  LB 
+```
+resource "azurerm_lb" "web-svc-lb" {
+#...
+#...
+frontend_ip_configuration {
+    name                 = "PublicIPAddress"
+    public_ip_address_id = azurerm_public_ip.web-svc-lb-ip.id
+  }
+#....  
 
+}
+```
+* [x] Backend pool (ref web-lb.tf) assigned to the LB in the previous step
+```
+resource "azurerm_lb_backend_address_pool" "web-svc-lb-backend" {
+  loadbalancer_id = azurerm_lb.web-svc-lb.id
+  name            = "BackEndAddressPool"
+}
+```
+* [x] A health probe is created and assigned to LB (Best practice - web-lb.tf). The port is set in the variable default 80
+```
+resource "azurerm_lb_probe" "web_svc_health_probe" {
+  resource_group_name = azurerm_resource_group.rg_web.name
+  loadbalancer_id     = azurerm_lb.web-svc-lb.id
+  name                = "web-http-probe"
+  port                = var.web_svc_port
+}
+```
+ 
 
-
-
-
-
-resource "azurerm_public_ip" "vm_pub_ip" 
-resource "azurerm_network_interface" "main" 

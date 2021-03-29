@@ -15,7 +15,7 @@ resource "azurerm_network_security_rule" "allow_access_from_intenet_80" {
   access                      = "Allow"
   protocol                    = "Tcp"
   source_port_range           = "*"
-  destination_port_range      = "80"
+  destination_port_range      = var.web_svc_port
   source_address_prefix       = "*"
   destination_address_prefix  = "*"
   resource_group_name         = azurerm_resource_group.rg_web.name
